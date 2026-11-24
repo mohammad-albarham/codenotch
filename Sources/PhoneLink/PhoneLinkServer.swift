@@ -10,7 +10,7 @@ import NIOPosix
 /// Phone pane and "Connect Phone…" lead nowhere. While off, the server never
 /// listens, even for someone who switched it on in a development build.
 enum PhoneLink {
-    static let isAvailable = false
+    static let isAvailable = true
 }
 
 enum PhoneLinkServerState: Equatable {
