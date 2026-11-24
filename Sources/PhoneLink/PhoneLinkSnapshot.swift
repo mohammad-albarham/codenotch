@@ -11,6 +11,9 @@ struct PhoneLinkSnapshot: Encodable {
     struct Provider: Encodable {
         let id: String
         let displayName: String
+        /// The mark the Mac draws for this provider (`ProviderGlyph` raw
+        /// value), so the phone never has to guess it from the id.
+        let glyph: String
         let fidelity: String
         let status: Status
         let windows: [Window]
@@ -19,13 +22,14 @@ struct PhoneLinkSnapshot: Encodable {
         let account: Account?
         
         enum CodingKeys: String, CodingKey {
-            case id, displayName, fidelity, status, windows, headlineId, block, account
+            case id, displayName, glyph, fidelity, status, windows, headlineId, block, account
         }
         
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(id, forKey: .id)
             try container.encode(displayName, forKey: .displayName)
+            try container.encode(glyph, forKey: .glyph)
             try container.encode(fidelity, forKey: .fidelity)
             try container.encode(status, forKey: .status)
             try container.encode(windows, forKey: .windows)
@@ -44,24 +48,36 @@ struct PhoneLinkSnapshot: Encodable {
     
     struct Window: Encodable {
         let id: String
+        /// Section the window belongs to ("Gemini Models"), when the provider
+        /// splits its windows into groups whose labels repeat.
+        let group: String?
         let label: String
         let usedFraction: Double?
         let remaining: Int?
         let used: Int?
+        /// How `used` reads on the Mac ("$14.28") when the raw count is in
+        /// another unit, such as cents. The phone shows this instead.
+        let usedText: String?
+        /// The Mac's own line for this window when it says more than the
+        /// numbers ("1.2M tokens"); shown in place of the computed summary.
+        let detail: String?
         let resetsAt: String?
         
         enum CodingKeys: String, CodingKey {
-            case id, label, usedFraction, remaining, used, resetsAt
+            case id, group, label, usedFraction, remaining, used, usedText, detail, resetsAt
         }
         
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(id, forKey: .id)
+            if let group = group { try container.encode(group, forKey: .group) } else { try container.encodeNil(forKey: .group) }
             try container.encode(label, forKey: .label)
             
             if let usedFraction = usedFraction { try container.encode(usedFraction, forKey: .usedFraction) } else { try container.encodeNil(forKey: .usedFraction) }
             if let remaining = remaining { try container.encode(remaining, forKey: .remaining) } else { try container.encodeNil(forKey: .remaining) }
             if let used = used { try container.encode(used, forKey: .used) } else { try container.encodeNil(forKey: .used) }
+            if let usedText = usedText { try container.encode(usedText, forKey: .usedText) } else { try container.encodeNil(forKey: .usedText) }
+            if let detail = detail { try container.encode(detail, forKey: .detail) } else { try container.encodeNil(forKey: .detail) }
             if let resetsAt = resetsAt { try container.encode(resetsAt, forKey: .resetsAt) } else { try container.encodeNil(forKey: .resetsAt) }
         }
     }

@@ -116,10 +116,11 @@ Exactly the phone's `src/lib/types.ts` `Snapshot`:
   "server": {"name": "Sam's MacBook Pro", "version": "1.9.0", "generatedAt": "2026-09-11T17:55:13Z", "demo": false},
   "providers": [
     {
-      "id": "claude", "displayName": "Claude", "fidelity": "official",
+      "id": "claude", "displayName": "Claude", "glyph": "claude", "fidelity": "official",
       "status": {"kind": "ok"},
-      "windows": [{"id": "session", "label": "Current session", "usedFraction": 0.38,
-                   "remaining": null, "used": null, "resetsAt": "2026-09-11T20:07:00Z"}],
+      "windows": [{"id": "session", "group": null, "label": "Current session", "usedFraction": 0.38,
+                   "remaining": null, "used": null, "usedText": null, "detail": null,
+                   "resetsAt": "2026-09-11T20:07:00Z"}],
       "headlineId": "session",
       "block": null,
       "account": {"plan": "max", "source": "Codenotch"}
@@ -138,9 +139,15 @@ Mapping from desktop types:
   LM Studio — the phone has no view for them yet).
 - `status.kind`: `ok`, `stale` (+ `since` ISO-8601), `needsAuth` (also for
   `signedOutByOwner`), `accessDenied`, `unsupported` (+ `why`), `error` (+ `why`).
-- `windows[]`: `id`, `label`, `usedFraction` (null when unknown), `remaining`,
-  `used`, `resetsAt` (ISO-8601 or null). Extra fields (`group`, `usedText`,
-  `detail`) may be added; the phone ignores what it doesn't know.
+- `glyph`: the `ProviderGlyph` raw value the Mac draws for the provider, so the
+  phone shows the same mark without guessing from `id`.
+- `windows[]`: `id`, `group` (the section a window sits in, e.g. Antigravity's
+  "Gemini Models", or null), `label`, `usedFraction` (null when unknown),
+  `remaining`, `used`, `usedText` (how `used` reads when its raw unit differs,
+  e.g. cents shown as "$14.28"; the phone must show this rather than `used`),
+  `detail` (the Mac's own line for the window, or null), `resetsAt` (ISO-8601
+  or null). Every key is always present; unknown values are `null`. Phones
+  ignore keys they don't know, so new keys are additive.
 - `headlineId` = the provider's declared headline window id (null if none).
 - `block` = `{reason, resetsAt}` or null. `account.plan` from `plan` when known.
 - Sessions: every live agent session the notch knows about. `state` maps

@@ -501,10 +501,11 @@ final class PhoneLinkTests: XCTestCase {
                 PhoneLinkSnapshot.Provider(
                     id: "p1",
                     displayName: "P1",
+                    glyph: "claude",
                     fidelity: "high",
                     status: PhoneLinkSnapshot.Status(kind: "ok", since: nil, why: nil),
                     windows: [PhoneLinkSnapshot.Window(
-                        id: "w1", label: "W1", usedFraction: nil, remaining: nil, used: nil, resetsAt: nil
+                        id: "w1", group: nil, label: "W1", usedFraction: nil, remaining: nil, used: nil, usedText: nil, detail: nil, resetsAt: nil
                     )],
                     headlineId: nil,
                     block: nil,
@@ -516,9 +517,35 @@ final class PhoneLinkTests: XCTestCase {
             )]
         )
         let json = String(decoding: try JSONEncoder().encode(snapshot), as: UTF8.self)
-        for key in ["headlineId", "block", "account", "usedFraction", "remaining", "resetsAt", "waitingFor", "since"] {
+        for key in ["headlineId", "block", "account", "group", "usedFraction", "remaining", "usedText", "detail", "resetsAt", "waitingFor", "since"] {
             XCTAssertTrue(json.contains("\"\(key)\":null"))
         }
+    }
+
+    /// The phone has to tell repeated labels apart and must not print a raw
+    /// count in the wrong unit, so group, usedText and detail cross the wire as-is.
+    func testSnapshotCarriesGlyphAndWindowGroupUsedTextAndDetail() throws {
+        let windows = [
+            LimitWindow(id: "gemini-5h", group: "Gemini Models", label: "5-hour Limit", usedFraction: 0.1),
+            LimitWindow(id: "spend", label: "Spend", used: 1428, usedText: "$14.28", detail: "$14.28 of $50"),
+        ]
+        let snapshot = ProviderSnapshot(
+            id: "p1", displayName: "P1", glyph: .claude, fidelity: .official, status: .ok,
+            windows: windows, headlineID: "gemini-5h"
+        )
+        let built = PhoneLinkSnapshotBuilder.build(
+            snapshots: [snapshot], sessions: [], disconnected: [], order: [],
+            serverName: "Test", serverVersion: "1.0", now: Date(timeIntervalSince1970: 0)
+        )
+        let data = try JSONEncoder().encode(built)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let provider = try XCTUnwrap((json["providers"] as? [[String: Any]])?.first)
+        let wire = try XCTUnwrap(provider["windows"] as? [[String: Any]])
+        XCTAssertEqual(provider["glyph"] as? String, "claude")
+        XCTAssertEqual(wire[0]["group"] as? String, "Gemini Models")
+        XCTAssertEqual(wire[1]["used"] as? Int, 1428)
+        XCTAssertEqual(wire[1]["usedText"] as? String, "$14.28")
+        XCTAssertEqual(wire[1]["detail"] as? String, "$14.28 of $50")
     }
 
     private struct ServerContext {

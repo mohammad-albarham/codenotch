@@ -64,10 +64,13 @@ struct PhoneLinkSnapshotBuilder {
             let windows = snap.windows.map { w in
                 PhoneLinkSnapshot.Window(
                     id: w.id,
+                    group: w.group,
                     label: w.label,
                     usedFraction: w.usedFraction,
                     remaining: w.remaining,
                     used: w.used,
+                    usedText: w.usedText,
+                    detail: w.detail,
                     resetsAt: w.resetsAt.map { formatISO($0) }
                 )
             }
@@ -81,6 +84,7 @@ struct PhoneLinkSnapshotBuilder {
             let p = PhoneLinkSnapshot.Provider(
                 id: snap.id,
                 displayName: snap.displayName,
+                glyph: snap.glyph.rawValue,
                 fidelity: String(describing: snap.fidelity),
                 status: status,
                 windows: windows,
